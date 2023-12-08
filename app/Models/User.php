@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -65,6 +67,61 @@ class User extends Authenticatable
     public function watched()
     {
         return $this->belongsToMany(Lesson::class)->wherePivot('watched', true);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(Achievement::class);
+    }
+
+    /**
+     * @param string $achievement
+     * @return void
+     */
+    public function unlockAchievement(string $achievement): void
+    {
+        // If the achievement exists and the user has not unlocked it yet, attach it to the user
+        if ($achievement && !$this->achievements()->where('achievement_name', $achievement)->exists()) {
+            $this->achievements()->create(['achievement_name' => $achievement]);
+        }
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function badge(): HasOne
+    {
+        return $this->hasOne(Badge::class);
+    }
+
+    /**
+     * @return void
+     */
+    public function updateBadge(): void
+    {
+        // Get the number of achievements unlocked by the user
+        $count = $this->achievements()->count();
+
+        $userBadge = $this->badge;
+
+        // Determine the badge name based on the count
+        $badge = match (true) {
+            $count >= 0 && $count < 4 => 'Beginner',
+            $count >= 4 && $count < 8 => 'Intermediate',
+            $count >= 8 && $count < 10 => 'Advanced',
+            $count >= 10 => 'Master',
+            default => $userBadge->badge ?? null,
+        };
+
+        // Update or create user badge
+        if(!$userBadge) {
+            $this->badge()->create(['badge_name' => $badge]);
+        } else if ($badge !== $userBadge->badge) {
+            $userBadge->update(['badge_name' => $badge]);
+        }
     }
 }
 

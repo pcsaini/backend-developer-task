@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\CommentWritten;
+use App\Listeners\UnlockCommentWrittenAchievement ;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -15,8 +17,8 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
+        CommentWritten::class => [
+            UnlockCommentWrittenAchievement ::class,
         ],
     ];
 
@@ -25,7 +27,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+
     }
 
     /**
